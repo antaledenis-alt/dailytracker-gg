@@ -1,0 +1,132 @@
+# Сборка приложения для iOS и Android и публикация в Releases.
+# Запускается при каждом push в main или вручную: Actions -> Build -> Run workflow.
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Проверка типов
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  ios:
+    name: iOS (.ipa, без подписи)
+    needs: check
+    runs-on: macos-26
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Генерация нативного проекта
+        run: npx expo prebuild --platform ios --clean --no-install
+      - name: CocoaPods
+        run: cd ios && pod install
+      - name: Сборка
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace ios/Planner.xcworkspace \
+            -scheme Planner \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            -quiet
+      - name: Упаковка
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qry Planner.ipa Payload
+          ls -lh Planner.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios
+          path: Planner.ipa
+          retention-days: 30
+
+  android:
+    name: Android (.apk)
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+      - name: Генерация нативного проекта
+        run: npx expo prebuild --platform android --clean --no-install
+      - name: Сборка
+        run: cd android && ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+      - name: Упаковка
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk Planner.apk
+          ls -lh Planner.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: Planner.apk
+          retention-days: 30
+
+  release:
+    name: Публикация релиза
+    needs: [ios, android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Версия
+        id: v
+        run: echo "version=$(node -p "require('./app.json').expo.version")" >> "$GITHUB_OUTPUT"
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.v.outputs.version }}-build.${{ github.run_number }}
+          name: Планер ${{ steps.v.outputs.version }} (сборка ${{ github.run_number }})
+          body: |
+            Файлы:
+            - Planner.ipa — iPhone, установка через SideStore (см. docs/install-ios.md)
+            - Planner.apk — Android, прямая установка (см. docs/install-android.md)
+
+            Коммит: ${{ github.sha }}
+          files: |
+            dist/Planner.ipa
+            dist/Planner.apk
+          make_latest: true

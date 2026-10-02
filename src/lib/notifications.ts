@@ -2,6 +2,7 @@
 // и напоминание о переподписи. Всё планируется на самом телефоне — сервер не нужен.
 // iOS хранит не больше 64 запланированных уведомлений, поэтому держим «окно» ближайших 60
 // и пересобираем его при каждом изменении и при открытии приложения.
+import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import type { Task } from './db';
 import { dateTimeTxt, fmt, ts } from './date';
@@ -11,6 +12,8 @@ import type { Settings } from './store';
 export const CAT_TASK = 'task';
 export const CAT_END = 'task_end';
 const LIMIT = 60;
+export const CHANNEL = 'tasks';
+const isIOS = Platform.OS === 'ios';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -27,6 +30,15 @@ export async function setupNotifications(): Promise<boolean> {
   if (!granted && cur.canAskAgain) {
     const r = await Notifications.requestPermissionsAsync({ ios: { allowAlert: true, allowSound: true, allowBadge: false } });
     granted = r.granted;
+  }
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync(CHANNEL, {
+      name: 'Задачи и напоминания',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 150, 250],
+      lightColor: '#E0564A',
+      sound: 'default',
+    });
   }
   await Notifications.setNotificationCategoryAsync(CAT_TASK, [
     { identifier: 'done', buttonTitle: 'Готово', options: { opensAppToForeground: false } },
@@ -81,7 +93,7 @@ function taskItems(t: Task, s: Settings, now: number): Item[] {
 }
 
 function signItems(expiry: number | null, now: number): Item[] {
-  if (!expiry) return [];
+  if (!expiry || !isIOS) return [];
   const when = dateTimeTxt(expiry);
   const steps = [
     { before: 24 * 3600000, title: 'Завтра нужно переподписать приложение' },
@@ -121,7 +133,7 @@ export async function syncNotifications(tasks: Task[], s: Settings, signExpiry: 
       for (const it of [...sign, ...items]) {
         await Notifications.scheduleNotificationAsync({
           content: { title: it.title, body: it.body, data: it.data, categoryIdentifier: it.category, sound: true },
-          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(it.at) },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(it.at), channelId: CHANNEL },
         });
       }
     } catch (e) {
@@ -146,13 +158,13 @@ export async function snooze(t: Task, minutes = 10) {
       categoryIdentifier: CAT_TASK,
       sound: true,
     },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: minutes * 60 },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: minutes * 60, channelId: CHANNEL },
   });
 }
 
 export async function testNotification() {
   await Notifications.scheduleNotificationAsync({
     content: { title: 'Проверка уведомлений', body: 'Всё работает. Так будут выглядеть напоминания о задачах.', categoryIdentifier: CAT_TASK, data: { kind: 'test' }, sound: true },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 5 },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 5, channelId: CHANNEL },
   });
 }

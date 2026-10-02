@@ -1,6 +1,6 @@
 // Настройки: подпись приложения (сколько осталось до переподписи), уведомления по умолчанию.
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Sheet } from '../components/Sheet';
 import { Chip, Icon, Press, Ring, Switch, Txt } from '../components/ui';
@@ -25,6 +25,7 @@ export function SettingsSheet() {
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         <Txt w="b" size={26} style={{ letterSpacing: -0.4 }}>Настройки</Txt>
 
+        {Platform.OS === 'ios' && (<>
         <Txt w="s" size={12.5} color="#8A8D93" style={styles.lbl}>ПОДПИСЬ ПРИЛОЖЕНИЯ</Txt>
         <Animated.View entering={FadeInDown.springify()} style={styles.card}>
           <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
@@ -66,6 +67,7 @@ export function SettingsSheet() {
             )}
           </View>
         </Animated.View>
+        </>)}
 
         <Txt w="s" size={12.5} color="#8A8D93" style={styles.lbl}>НАПОМИНАНИЯ ДЛЯ НОВЫХ ЗАДАЧ</Txt>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -115,7 +117,7 @@ export function SettingsSheet() {
           <Icon d={ICONS.bell} size={18} color="#fff" />
           <Txt w="s" size={15} color="#fff">Проверить уведомление</Txt>
         </Press>
-        <Txt size={12} color={C.faint} style={{ marginTop: 18, textAlign: 'center' }}>Планер · версия 0.1 · данные хранятся только на этом телефоне</Txt>
+        <Txt size={12} color={C.faint} style={{ marginTop: 18, textAlign: 'center' }}>Планер · версия 0.2 · данные хранятся только на этом телефоне</Txt>
       </ScrollView>
     </Sheet>
   );

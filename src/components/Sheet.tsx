@@ -115,6 +115,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.22,
     shadowRadius: 30,
     shadowOffset: { width: 0, height: -8 },
+    elevation: 24,
   },
   grabZone: { alignItems: 'center', paddingTop: 10, paddingBottom: 14 },
   grabber: { width: 38, height: 5, borderRadius: 3, backgroundColor: '#DCDCD8' },

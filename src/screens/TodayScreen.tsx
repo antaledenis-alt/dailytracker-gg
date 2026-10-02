@@ -1,6 +1,6 @@
 // Экран «Сегодня»: шапка с прогрессом, полоса недели, карточка «Сейчас» и таймлайн дня.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
+import { LayoutChangeEvent, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -259,7 +259,7 @@ function plural(n: number) {
 function SignBanner() {
   const s = useApp();
   const exp = signExpiry(s);
-  if (!exp) return null;
+  if (!exp || Platform.OS !== 'ios') return null;
   const left = exp - s.clock;
   if (left > 2 * 24 * 3600000) return null;
   return (

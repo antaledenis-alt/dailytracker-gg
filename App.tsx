@@ -1,6 +1,6 @@
 // Корень приложения: шрифты, жесты, экраны, шторки, уведомления и фоновые проверки.
 import React, { useEffect, useRef } from 'react';
-import { AppState, StyleSheet, View } from 'react-native';
+import { AppState, BackHandler, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -111,6 +111,16 @@ export default function App() {
     });
     const sub = Notifications.addNotificationResponseReceivedListener(handleResponse);
     const clock = setInterval(tick, 30000);
+    // Android: кнопка «Назад» сначала закрывает открытые шторки.
+    const back = BackHandler.addEventListener('hardwareBackPress', () => {
+      const s = getState();
+      if (s.editor) nav.editor(null);
+      else if (s.sheetTask) nav.sheet(null);
+      else if (s.settingsOpen) nav.settings(false);
+      else if (s.tab !== 'today') nav.tab('today');
+      else return false;
+      return true;
+    });
     const app = AppState.addEventListener('change', (st) => {
       if (st === 'active') {
         refreshSign();
@@ -120,6 +130,7 @@ export default function App() {
     return () => {
       sub.remove();
       clearInterval(clock);
+      back.remove();
       app.remove();
     };
   }, []);

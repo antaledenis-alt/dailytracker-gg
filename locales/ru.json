@@ -2,5 +2,8 @@
   "ios": {
     "CFBundleDisplayName": "Планер",
     "CFBundleName": "Планер"
+  },
+  "android": {
+    "app_name": "Планер"
   }
 }

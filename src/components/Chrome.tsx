@@ -107,12 +107,12 @@ const styles = StyleSheet.create({
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2 },
   fab: {
     width: 62, height: 62, borderRadius: 31, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#14141E', shadowOpacity: 0.4, shadowRadius: 14, shadowOffset: { width: 0, height: 8 },
+    shadowColor: '#14141E', shadowOpacity: 0.4, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 8,
   },
   toast: {
     position: 'absolute', left: 16, right: 16, backgroundColor: C.ink, borderRadius: 18, paddingVertical: 10, paddingLeft: 16, paddingRight: 8,
     flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 50,
-    shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 18, shadowOffset: { width: 0, height: 10 },
+    shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 10,
   },
   undo: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10 },
 });
