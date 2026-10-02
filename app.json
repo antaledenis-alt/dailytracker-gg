@@ -9,12 +9,13 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.dennis.dailytracker",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
         "CADisableMinimumFrameDurationOnPhone": true,
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleDevelopmentRegion": "ru",
-        "CFBundleDisplayName": "Планер"
+        "CFBundleDisplayName": "Planner",
+        "CFBundleAllowMixedLocalizations": true
       }
     },
     "android": {
@@ -34,6 +35,9 @@
       "expo-sqlite",
       "expo-font",
       "./plugins/withNoPush.js"
-    ]
+    ],
+    "locales": {
+      "ru": "./locales/ru.json"
+    }
   }
 }
